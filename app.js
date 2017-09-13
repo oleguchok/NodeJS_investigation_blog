@@ -25,7 +25,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.static(path.join(__dirname, "dist")));
+app.use('/dist', express.static(path.join(__dirname, "dist")));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(session({secret: 'keyboard cat', resave: true, saveUninitialized: true, cookie: {}}));
