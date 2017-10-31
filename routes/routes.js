@@ -1,7 +1,7 @@
 const express = require('express'),
     router = express.Router(),
     data = require('../dataAccessLayer');
-
+    
 module.exports = function (passport) {
     // serverErrorHandler
     router.use((req, res, next) => {
@@ -87,6 +87,10 @@ module.exports = function (passport) {
         req.logout();
         res.redirect('/');
     });
+
+    router.get('/comments', (req, res) => {
+        res.sendFile('comments.html', { root: 'dist'});
+    })
 
     return router;
 }
