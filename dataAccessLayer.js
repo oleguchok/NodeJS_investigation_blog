@@ -1,7 +1,8 @@
 const blog = require('./models/blog.model.js'),
     posts = require('./models/post.model.js'),
-    cache = require('./config/cache.js'), {POST_MODEL, CACHE} = require('./config/constants'),
-    config = require('./config/config.js').get(process.env.NODE_ENV),
+    cache = require('./config/cache.js'), 
+    {POST_MODEL, CACHE} = require('./config/constants'),
+    config = require('config'),
     data = {};
 
 function cacheUpdate(result, callback) {
@@ -23,7 +24,7 @@ data.getProfileInfo = () => {
     };
 
     return new Promise((resolve, reject) => {
-        if (config.cache.shouldBeUsed) {
+        if (config.get('cache.shouldBeUsed')) {
             cache
                 .getData()
                 .then((result) => {
@@ -69,7 +70,7 @@ data.getPostById = (postId) => {
     };
 
     return new Promise((resolve, reject) => {
-        if (config.cache.shouldBeUsed) {
+        if (config.get('cache.shouldBeUsed')) {
             cache
                 .getData()
                 .then((result) => {
@@ -103,7 +104,7 @@ data.addCommentToThePost = (content, ownerId, detailId) => {
             .addComment(content, ownerId, detailId)
             .spread((result, metadata) => {
                 // CACHE update on comment adding
-                if (config.cache.shouldBeUsed) {
+                if (config.get('cache.shouldBeUsed')) {
                     blog
                         .POSTS
                         .getAllPostsInfo()
@@ -124,7 +125,7 @@ data.setRateToThePost = (rating, postId, ownerId) => {
             .RATES
             .setRate(rating, postId, ownerId)
             .spread((result, metadata) => {
-                if (config.cache.shouldBeUsed) {
+                if (config.get('cache.shouldBeUsed')) {
                     blog
                         .POSTS
                         .getAllPostsInfo()
@@ -145,7 +146,7 @@ data.addPost = (title, content) => {
             .POSTS
             .addPost(title, content)
             .spread((result, metadata) => {
-                if (config.cache.shouldBeUsed) {
+                if (config.get('cache.shouldBeUsed')) {
                     blog
                         .POSTS
                         .getAllPostsInfo()

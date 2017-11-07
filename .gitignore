@@ -45,3 +45,6 @@ temp_data
 # IDEs
 .vscode
 dist
+
+#nodejs config
+local*.json

@@ -1,7 +1,6 @@
 const DB = require('../config/constants'),
-  config = require('../config/config.js').get(process.env.NODE_ENV);
-
-const dataBase = require('../database/database')(DB.BLOG, config.database.login, config.database.password, config.database.options),
+  config = require("config");
+const dataBase = require('../database/database')(DB.BLOG, config.get("database.login"), config.get("database.password"), config.get("database.options")),
   blog = {
     USERS: {},
     POSTS: {},
