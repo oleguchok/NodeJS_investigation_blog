@@ -19,7 +19,7 @@ exports.columns = {
       PASSWORD: 'Password'
     },
     POSTS: {
-      POST_ID: 'postId',
+      POST_ID: 'postID',
       TITLE: 'Title',
       DATE: 'Date',
       OWNER_ID: 'OwnerID'

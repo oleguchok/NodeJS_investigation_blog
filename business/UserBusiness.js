@@ -14,6 +14,6 @@ module.exports.getUserByCredentials = (username, password) => {
                 } else {
                     resolve(users[0].get());
                 }
-            })
-    })
+            });
+    });
 };

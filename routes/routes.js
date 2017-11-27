@@ -34,7 +34,7 @@ module.exports = function (passport) {
 
     router.get('/profile/post/:id', (req, res) => {
         console.time("Post_Benchmark");
-        data
+        PostBusiness
             .getPostById(req.params.id)
             .then((postInfo) => {
                 res.render('post', postInfo);
