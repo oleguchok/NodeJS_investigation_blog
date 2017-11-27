@@ -51,7 +51,7 @@ module.exports = function (passport) {
     });
 
     router.post('/profile/post/:id/rate', (req, res) => {
-        data
+        PostBusiness
             .setRateToThePost(req.body.rating, req.params.id, req.query.ownerId)
             .then(() => {
                 res.redirect('../' + req.params.id + '?userId=' + global.User.id);

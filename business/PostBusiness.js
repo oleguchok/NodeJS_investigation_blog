@@ -1,6 +1,7 @@
 const Posts = require('../models/').Posts,
     PostDetails = require('../models/').PostDetails,
     Comments = require('../models/').Comments,
+    Rates = require('../models/').Rates,
     cache = require('../config/cache.js'),
     { POST_MODEL, CACHE, columns } = require('../config/constants'),
     config = require('../config/config.js')[process.env.NODE_ENV];
@@ -51,7 +52,7 @@ function addPost(title, content) {
                 PostBody: content
             }
         }, {
-            include: [ PostDetails ]
+            include: [PostDetails]
         }).then((result) => {
             if (config.cache.shouldBeUsed) {
                 getAllPostsInfo()
@@ -115,7 +116,7 @@ function addCommentToThePost(content, ownerId, detailId) {
             .create({
                 CommentContent: content,
                 Date: new Date(),
-                postDetailID: detailId,  //refactor to check if post detail and owner are exist
+                postDetailID: detailId, //refactor to check if post detail and owner are exist
                 commentOwnerID: ownerId
             }).then((result) => {
                 // CACHE update on comment adding
@@ -138,7 +139,7 @@ function getPostInfoById(postId, posts) {
     postInfo[POST_MODEL.POST_CREATION_DATE] = null;
 
     for (let i = 0; i < posts.length; i++) {
-        if (posts[i][POST_MODEL.POST_ID] === + postId) {
+        if (posts[i][POST_MODEL.POST_ID] === +postId) {
             postInfo[POST_MODEL.POST_TITLE] = posts[i][POST_MODEL.POST_TITLE];
             postInfo[POST_MODEL.POST_AUTHOR] = posts[i][POST_MODEL.POST_AUTHOR];
             postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i][POST_MODEL.POST_CREATION_DATE];
@@ -153,7 +154,7 @@ function getPostInfoById(postId, posts) {
 
 function getPostCommentsByPostId(postId, posts) {
     let currentPostInfo = posts.filter((item) => {
-        return (item[POST_MODEL.POST_ID] === + postId && !!item[POST_MODEL.POST_COMMENT_AUTHOR_ID]);
+        return (item[POST_MODEL.POST_ID] === +postId && !!item[POST_MODEL.POST_COMMENT_AUTHOR_ID]);
     });
 
     return currentPostInfo.map((item) => {
@@ -170,7 +171,7 @@ function getPostCommentsByPostId(postId, posts) {
 function isPostRatedByCurrentUser(postId, posts) {
     let isRated = null;
     posts.forEach((item) => {
-        if (item[POST_MODEL.POST_ID] === + postId) {
+        if (item[POST_MODEL.POST_ID] === +postId) {
             isRated = !!item[POST_MODEL.CURRENT_USERS_RATE];
         }
     });
@@ -212,6 +213,28 @@ function getOtherUsersPosts(posts) {
     });
 };
 
+function setRateToThePost(rating, postId, ownerId) {
+
+    return new Promise((resolve, reject) => {
+        Rates
+            .create({
+                rate: rating, 
+                postID: 1,
+                userID: 1
+            })
+            .then((result) => {
+                if (config.cache.shouldBeUsed) {
+                    getAllPostsInfo()
+                        .then((result) => {
+                            cacheUpdate(result, resolve);
+                        });
+                } else {
+                    resolve();
+                }
+            });
+    });
+}
+
 function cacheUpdate(result, callback) {
     cache
         .event
@@ -227,5 +250,6 @@ module.exports = {
     addPost: addPost,
     getCurrentUsersPosts: getCurrentUsersPosts,
     getPostById: getPostById,
-    getProfileInfo: getProfileInfo
+    getProfileInfo: getProfileInfo,
+    setRateToThePost: setRateToThePost
 }

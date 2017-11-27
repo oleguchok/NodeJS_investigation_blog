@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         rate: {
             type: DataTypes.FLOAT
         }
-    });
+    }, { timestamps: false });
 
     return Rates;
 };
