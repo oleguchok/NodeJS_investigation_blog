@@ -1,6 +1,5 @@
 const express = require('express'),
     router = express.Router(),
-    data = require('../dataAccessLayer'),
     PostBusiness = require('../business/PostBusiness');
 
 module.exports = function (passport) {
