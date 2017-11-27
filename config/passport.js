@@ -17,8 +17,8 @@ module.exports = function(passport) {
 
     passport.use('local', new LocalStrategy((username, password, done) => {
         UsersBusiness.getUserByCredentials(username, password)
-        .then((result) => {
-            
+            .then((result) => {
+
                 global.User = {
                     id: result[`${DB.columns.BLOG.USERS.USER_ID}`],
                     name: result[`${DB.columns.BLOG.USERS.NAME}`],
@@ -29,10 +29,10 @@ module.exports = function(passport) {
                     userId: result[`${DB.columns.BLOG.USERS.USER_ID}`],
                     username: result[`${DB.columns.BLOG.USERS.NAME}`]
                 });
-            
-        }).catch(() => {
-            return done(null, false);
-        });
+
+            }).catch(() => {
+                return done(null, false); //Check done 1 argument
+            });
     }));
 
     passport.use(new FacebookStrategy({
@@ -49,7 +49,7 @@ module.exports = function(passport) {
                     });
                 } else {
                     Model.USERS.addNewFacebookUser(profile.id);
-                    return done(null, {facebookId: profile.id});
+                    return done(null, { facebookId: profile.id });
                 }
             })
         });

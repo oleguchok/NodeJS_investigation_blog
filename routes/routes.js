@@ -1,6 +1,7 @@
 const express = require('express'),
     router = express.Router(),
-    data = require('../dataAccessLayer');
+    data = require('../dataAccessLayer'),
+    PostBusiness = require('../business/PostBusiness');
 
 module.exports = function (passport) {
     // serverErrorHandler
@@ -22,7 +23,7 @@ module.exports = function (passport) {
 
     router.get('/profile', (req, res) => {
         console.time("Profile_Benchmark");
-        data
+        PostBusiness
             .getProfileInfo()
             .then((profileInfo) => {
                 res.render('profile', profileInfo);
@@ -63,7 +64,7 @@ module.exports = function (passport) {
     });
 
     router.post('/profile/newPost', (req, res) => {
-        data
+        PostBusiness
             .addPost(req.body.title, req.body.content)
             .then(() => {
                 res.redirect('/profile');
