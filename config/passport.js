@@ -1,6 +1,5 @@
 const LocalStrategy = require('passport-local').Strategy,
     FacebookStrategy = require('passport-facebook').Strategy,
-    Model = require('../models/blog.model'),
     configAuth = require('./auth'),
     DB = require('./constants'),
     UsersBusiness = require('../business/UserBusiness');
@@ -41,14 +40,14 @@ module.exports = function(passport) {
         callbackURL: configAuth.facebookAuth.callbackURL
     }, (token, refreshToken, profile, done) => {
         process.nextTick(() => {
-            Model.USERS.getUserByFacebookId(profile.id).spread((result, metadata) => {
+            UsersBusiness.getUserByFacebookId(profile.id).spread((result, metadata) => {
                 if (result.length === 1) {
                     return done(null, {
                         userId: result[0].userId,
                         username: result[0].username
                     });
                 } else {
-                    Model.USERS.addNewFacebookUser(profile.id);
+                    UsersBusiness.addNewFacebookUser(profile.id);
                     return done(null, { facebookId: profile.id });
                 }
             })
