@@ -1,5 +1,6 @@
 const Posts = require('../models/').Posts,
     PostDetails = require('../models/').PostDetails,
+    Comments = require('../models/').Comments,
     cache = require('../config/cache.js'),
     { POST_MODEL, CACHE, columns } = require('../config/constants'),
     config = require('../config/config.js')[process.env.NODE_ENV];
@@ -108,6 +109,28 @@ function getPostById(postId) {
     });
 };
 
+function addCommentToThePost(content, ownerId, detailId) {
+    return new Promise((resolve, reject) => {
+        Comments
+            .create({
+                CommentContent: content,
+                Date: new Date(),
+                postDetailID: detailId,  //refactor to check if post detail and owner are exist
+                commentOwnerID: ownerId
+            }).then((result) => {
+                // CACHE update on comment adding
+                if (config.cache.shouldBeUsed) {
+                    getAllPostsInfo()
+                        .then((result) => {
+                            cacheUpdate(result, resolve);
+                        });
+                } else {
+                    resolve();
+                }
+            });
+    });
+}
+
 function getPostInfoById(postId, posts) {
     let postInfo = {};
     postInfo[POST_MODEL.POST_TITLE] = null;
@@ -200,6 +223,7 @@ function cacheUpdate(result, callback) {
 }
 
 module.exports = {
+    addCommentToThePost: addCommentToThePost,
     addPost: addPost,
     getCurrentUsersPosts: getCurrentUsersPosts,
     getPostById: getPostById,

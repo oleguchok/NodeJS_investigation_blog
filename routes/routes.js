@@ -43,7 +43,7 @@ module.exports = function (passport) {
     });
 
     router.post('/profile/post/:id/newComment', (req, res) => {
-        data
+        PostBusiness
             .addCommentToThePost(req.body.comment, req.query.ownerId, req.query.detailId)
             .then(() => {
                 res.redirect('../' + req.params.id + '?userId=' + global.User.id);
