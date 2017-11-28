@@ -2,18 +2,28 @@ const Posts = require('../models/').Posts,
     PostDetails = require('../models/').PostDetails,
     Comments = require('../models/').Comments,
     Rates = require('../models/').Rates,
+    Users = require('../models').Users,
     cache = require('../config/cache.js'),
     { POST_MODEL, CACHE, columns } = require('../config/constants'),
     config = require('../config/config.js')[process.env.NODE_ENV];
 
 function getAllPostsInfo() {
-    return Posts.findAll();
+    return Posts.findAll({
+        include: [{
+            model: Users,
+            attributes: ['Name']
+        }, {
+            model: PostDetails
+        }, {
+            model: Rates
+        }]
+    });
 };
 
 function getProfileInfo() {
     function createResponseOptions(result) {
         return {
-            myPostsCollection: getCurrentUsersPosts(result),
+            myPostsCollection: getCurrentUsersPosts(result), //methods are almost equal. Refactor
             otherPostsCollection: getOtherUsersPosts(result)
         }
     };
@@ -139,13 +149,13 @@ function getPostInfoById(postId, posts) {
     postInfo[POST_MODEL.POST_CREATION_DATE] = null;
 
     for (let i = 0; i < posts.length; i++) {
-        if (posts[i][POST_MODEL.POST_ID] === +postId) {
-            postInfo[POST_MODEL.POST_TITLE] = posts[i][POST_MODEL.POST_TITLE];
-            postInfo[POST_MODEL.POST_AUTHOR] = posts[i][POST_MODEL.POST_AUTHOR];
-            postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i][POST_MODEL.POST_CREATION_DATE];
-            postInfo[POST_MODEL.POST_CONTENT] = posts[i][POST_MODEL.POST_CONTENT];
-            postInfo[POST_MODEL.POST_DETAIL_ID] = posts[i][POST_MODEL.POST_DETAIL_ID];
-            postInfo[POST_MODEL.POST_RATE] = posts[i][POST_MODEL.POST_RATE];
+        if (posts[i][columns.BLOG.POSTS.POST_ID] === +postId) {
+            postInfo[POST_MODEL.POST_TITLE] = posts[i][columns.BLOG.POSTS.TITLE];
+            postInfo[POST_MODEL.POST_AUTHOR] = posts[i].User.Name;
+            postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i][columns.BLOG.POSTS.DATE];
+            postInfo[POST_MODEL.POST_CONTENT] = posts[i].PostDetail.PostBody;
+            postInfo[POST_MODEL.POST_DETAIL_ID] = posts[i].PostDetail.detailID;
+            postInfo[POST_MODEL.POST_RATE] = posts[i][POST_MODEL.POST_RATE]; // count average (sum / count)
             break;
         }
     }
@@ -183,7 +193,7 @@ function getCurrentUsersPosts(posts) {
         currentUsersPosts = posts.filter((item) => {
             if (!cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])]) {
                 cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])] = true;
-                return item[POST_MODEL.POST_AUTHOR_ID] === global.User.id;
+                return item[columns.BLOG.POSTS.OWNER_ID] === global.User.id;
             }
             return;
         });
@@ -198,17 +208,17 @@ function getCurrentUsersPosts(posts) {
 function getOtherUsersPosts(posts) {
     let cachedIds = {},
         otherUsersPosts = posts.filter((item) => {
-            if (!cachedIds[JSON.stringify(item[POST_MODEL.POST_ID])]) {
-                cachedIds[JSON.stringify(item[POST_MODEL.POST_ID])] = true;
-                return item[POST_MODEL.POST_AUTHOR_ID] !== global.User.id;
+            if (!cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])]) {
+                cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])] = true;
+                return item[columns.BLOG.POSTS.OWNER_ID] !== global.User.id;
             }
             return;
         });
     return otherUsersPosts.map((item) => {
         return {
-            postId: item[POST_MODEL.POST_ID],
-            Title: item[POST_MODEL.POST_TITLE],
-            Name: item[POST_MODEL.POST_AUTHOR]
+            postId: item[columns.BLOG.POSTS.POST_ID],
+            Title: item[columns.BLOG.POSTS.TITLE],
+            Name: item[columns.BLOG.USERS.NAME]
         }
     });
 };
@@ -218,7 +228,7 @@ function setRateToThePost(rating, postId, ownerId) {
     return new Promise((resolve, reject) => {
         Rates
             .create({
-                rate: rating, 
+                rate: rating,
                 postID: 1,
                 userID: 1
             })

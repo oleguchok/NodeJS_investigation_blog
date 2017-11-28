@@ -22,6 +22,9 @@ module.exports = (sequelize, DataTypes) => {
         Post.hasMany(models.Rates, {
             foreignKey: 'postID'
         });
+        Post.belongsTo(models.Users, {
+            foreignKey: 'OwnerID'
+        });
     };
 
     return Post;

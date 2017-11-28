@@ -1,9 +1,10 @@
-var config = {
+module.exports = {
     production: {},
-    default: {
+    development: {
         database: {
             login: 'admin',
             password: '123456',
+            name: 'Blog',
             options: {
                 host: 'RUKAVITSINI',
                 port: 1555,
@@ -14,8 +15,8 @@ var config = {
             shouldBeUsed: true
         }
     }
-}
+};
 
-exports.get = function get(env) {
-    return config[env] || config.default;
-}
+// exports.get = function get(env) {
+//     return config[env] || config.development;
+// }

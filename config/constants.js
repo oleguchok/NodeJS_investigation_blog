@@ -13,7 +13,7 @@ exports.tables = {
 exports.columns = {
   BLOG: {
     USERS: {
-      USER_ID: 'userId',
+      USER_ID: 'userID',
       NAME: 'Name',
       EMAIL: 'Email',
       PASSWORD: 'Password'
