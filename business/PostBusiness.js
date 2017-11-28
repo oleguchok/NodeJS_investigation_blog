@@ -3,6 +3,7 @@ const Post = require('../models/').Post,
     Comment = require('../models/').Comment,
     Rate = require('../models/').Rate,
     User = require('../models').User,
+    Sequelize = require('../models/').Sequelize,
     cache = require('../config/cache.js'),
     { POST_MODEL, CACHE, columns } = require('../config/constants'),
     config = require('../config/config.js')[process.env.NODE_ENV];
@@ -13,23 +14,20 @@ function getAllPostsInfo() {
             model: User,
             attributes: ['Name']
         }, {
-            model: PostDetail
+            model: PostDetail,
+            attributes: ['PostBody']
         }, {
-            model: Rate
-        }]
+            model: Rate,
+            attributes: [[Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']]
+        }],
+        group: ['Post.PostID', 'Title', 'Date', 'OwnerID', 'User.UserID', 'Name', 'PostDetailID', 'PostBody', 'RateID']
     });
 };
 
 function getProfileInfo() {
-    function createResponseOptions(result) {
-        return {
-            myPostsCollection: getCurrentUsersPosts(result), //methods are almost equal. Refactor
-            otherPostsCollection: getOtherUsersPosts(result)
-        }
-    };
 
     return new Promise((resolve, reject) => {
-        if (config.cache.shouldBeUsed) {
+        if (config.cache.shouldBeUsed) {  // remove if by using DI
             cache
                 .getData()
                 .then((result) => {
@@ -37,16 +35,16 @@ function getProfileInfo() {
                         getAllPostsInfo()
                             .then((result) => {
                                 cacheUpdate(result);
-                                resolve(createResponseOptions(result));
+                                resolve(_createResponseOptions(result));
                             });
                     } else {
-                        resolve(createResponseOptions(JSON.parse(result)));
+                        resolve(_createResponseOptions(JSON.parse(result)));
                     }
                 })
         } else {
             getAllPostsInfo()
                 .then((result) => {
-                    resolve(createResponseOptions(result));
+                    resolve(_createResponseOptions(result));
                 });
         }
     });
@@ -58,6 +56,7 @@ function addPost(title, content) {
         Post.create({
             Title: title,
             Date: new Date(),
+            OwnerID: global.User.id,
             PostDetail: {
                 PostBody: content
             }
@@ -188,37 +187,30 @@ function isPostRatedByCurrentUser(postId, posts) {
     return isRated;
 }
 
-function getCurrentUsersPosts(posts) {
-    let cachedIds = {},
-        currentUsersPosts = posts.filter((item) => {
-            if (!cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])]) {
-                cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])] = true;
-                return item[columns.BLOG.POSTS.OWNER_ID] === global.User.id;
-            }
-            return;
-        });
-    return currentUsersPosts.map((item) => {
+function _createResponseOptions(result) {
+    return {
+        myPostsCollection: _getCurrentUsersPosts(result),
+        otherPostsCollection: _getOtherUsersPosts(result)
+    }
+};
+
+function _getCurrentUsersPosts(posts) {
+    let currentUsersPosts = posts.filter((post) => post.OwnerID === global.User.id);
+    return currentUsersPosts.map((post) => {
         return {
-            postId: item[columns.BLOG.POSTS.POST_ID],
-            Title: item[columns.BLOG.POSTS.TITLE]
+            postId: post.PostID,
+            Title: post.Title
         }
     });
 };
 
-function getOtherUsersPosts(posts) {
-    let cachedIds = {},
-        otherUsersPosts = posts.filter((item) => {
-            if (!cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])]) {
-                cachedIds[JSON.stringify(item[columns.BLOG.POSTS.POST_ID])] = true;
-                return item[columns.BLOG.POSTS.OWNER_ID] !== global.User.id;
-            }
-            return;
-        });
-    return otherUsersPosts.map((item) => {
+function _getOtherUsersPosts(posts) {
+    let otherUsersPosts = posts.filter((post) => post.OwnerID !== global.User.id);
+    return otherUsersPosts.map((post) => {
         return {
-            postId: item[columns.BLOG.POSTS.POST_ID],
-            Title: item[columns.BLOG.POSTS.TITLE],
-            Name: item[columns.BLOG.USERS.NAME]
+            postId: post.PostID,
+            Title: post.Title,
+            Name: post.User.Name
         }
     });
 };
@@ -258,7 +250,6 @@ function cacheUpdate(result, callback) {
 module.exports = {
     addCommentToThePost: addCommentToThePost,
     addPost: addPost,
-    getCurrentUsersPosts: getCurrentUsersPosts,
     getPostById: getPostById,
     getProfileInfo: getProfileInfo,
     setRateToThePost: setRateToThePost
