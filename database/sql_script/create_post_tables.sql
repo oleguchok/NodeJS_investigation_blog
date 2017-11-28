@@ -12,13 +12,13 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[Users](
-	[userID] [int] IDENTITY(1,1) NOT NULL,
+	[UserID] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [varchar](255) NULL,
 	[Email] [varchar](255) NULL,
 	[Password] [varchar](255) NULL,
 PRIMARY KEY CLUSTERED 
 (
-	[userID] ASC
+	[UserID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
@@ -36,20 +36,20 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[Posts](
-	[postID] [int] IDENTITY(1,1) NOT NULL,
+	[PostID] [int] IDENTITY(1,1) NOT NULL,
 	[Title] [varchar](255) NULL,
 	[Date] [date] NULL,
 	[OwnerID] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
-	[postID] ASC
+	[PostID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
 GO
 
 ALTER TABLE [dbo].[Posts]  WITH CHECK ADD FOREIGN KEY([OwnerID])
-REFERENCES [dbo].[Users] ([userID])
+REFERENCES [dbo].[Users] ([UserID])
 GO
 
 --PostDetails
@@ -64,19 +64,19 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[PostDetails](
-	[detailID] [int] IDENTITY(1,1) NOT NULL,
-	[postID] [int] NULL,
+	[PostDetailID] [int] IDENTITY(1,1) NOT NULL,
+	[PostID] [int] NULL,
 	[PostBody] [nvarchar](max) NULL,
 PRIMARY KEY CLUSTERED 
 (
-	[detailID] ASC
+	[PostDetailID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
 GO
 
-ALTER TABLE [dbo].[PostDetails]  WITH CHECK ADD FOREIGN KEY([postID])
-REFERENCES [dbo].[Posts] ([postID])
+ALTER TABLE [dbo].[PostDetails]  WITH CHECK ADD FOREIGN KEY([PostID])
+REFERENCES [dbo].[Posts] ([PostID])
 GO
 
 --Comments Table
@@ -91,25 +91,25 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[Comments](
-	[commentID] [int] IDENTITY(1,1) NOT NULL,
-	[commentContent] [nvarchar](max) NULL,
+	[CommentID] [int] IDENTITY(1,1) NOT NULL,
+	[CommentContent] [nvarchar](max) NULL,
 	[Date] [date] NULL,
-	[commentOwnerID] [int] NULL,
-	[postDetailID] [int] NULL,
+	[CommentOwnerID] [int] NULL,
+	[PostDetailID] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
-	[commentID] ASC
+	[CommentID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
 GO
 
-ALTER TABLE [dbo].[Comments]  WITH CHECK ADD FOREIGN KEY([commentOwnerID])
-REFERENCES [dbo].[Users] ([userID])
+ALTER TABLE [dbo].[Comments]  WITH CHECK ADD FOREIGN KEY([CommentOwnerID])
+REFERENCES [dbo].[Users] ([UserID])
 GO
 
-ALTER TABLE [dbo].[Comments]  WITH CHECK ADD FOREIGN KEY([postDetailID])
-REFERENCES [dbo].[PostDetails] ([detailID])
+ALTER TABLE [dbo].[Comments]  WITH CHECK ADD FOREIGN KEY([PostDetailID])
+REFERENCES [dbo].[PostDetails] ([PostDetailID])
 GO
 
 -- Credentials Table
@@ -144,24 +144,24 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[Rates](
-	[rateID] [int] IDENTITY(1,1) NOT NULL,
-	[postID] [int] NULL,
-	[userID] [int] NULL,
-	[rate] [float] NULL,
+	[RateID] [int] IDENTITY(1,1) NOT NULL,
+	[PostID] [int] NULL,
+	[UserID] [int] NULL,
+	[Rate] [float] NULL,
 UNIQUE NONCLUSTERED 
 (
-	[rateID] ASC
+	[RateID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
 GO
 
-ALTER TABLE [dbo].[Rates]  WITH CHECK ADD FOREIGN KEY([postID])
-REFERENCES [dbo].[Posts] ([postID])
+ALTER TABLE [dbo].[Rates]  WITH CHECK ADD FOREIGN KEY([PostID])
+REFERENCES [dbo].[Posts] ([PostID])
 GO
 
-ALTER TABLE [dbo].[Rates]  WITH CHECK ADD FOREIGN KEY([userID])
-REFERENCES [dbo].[Users] ([userID])
+ALTER TABLE [dbo].[Rates]  WITH CHECK ADD FOREIGN KEY([UserID])
+REFERENCES [dbo].[Users] ([UserID])
 GO
 
 

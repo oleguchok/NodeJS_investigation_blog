@@ -13,34 +13,34 @@ exports.tables = {
 exports.columns = {
   BLOG: {
     USERS: {
-      USER_ID: 'userID',
+      USER_ID: 'UserID',
       NAME: 'Name',
       EMAIL: 'Email',
       PASSWORD: 'Password'
     },
     POSTS: {
-      POST_ID: 'postID',
+      POST_ID: 'PostID',
       TITLE: 'Title',
       DATE: 'Date',
       OWNER_ID: 'OwnerID'
     },
     POST_DETAILS: {
-      DETAIL_ID: 'detailID',
-      POST_ID: 'postID',
+      DETAIL_ID: 'PostDetailID',
+      POST_ID: 'PostID',
       CONTENT: 'PostBody'
     },
     COMMENTS: {
-      COMMENT_ID: 'commentID',
-      COMMENT_CONTENT: 'commentContent',
+      COMMENT_ID: 'CommentID',
+      COMMENT_CONTENT: 'CommentContent',
       DATE: 'Date',
-      COMMENT_OWNER_ID: 'commentOwnerID',
-      POST_DETAIL_ID: 'postDetailId'
+      COMMENT_OWNER_ID: 'CommentOwnerID',
+      POST_DETAIL_ID: 'PostDetailId'
     },
     RATES: {
-      RATE_ID: "rateID",
-      POST_ID: "postID",
-      USER_ID: "userID",
-      RATE: "rate"
+      RATE_ID: "RateID",
+      POST_ID: "PostID",
+      USER_ID: "UserID",
+      RATE: "Rate"
     }
   }
 }

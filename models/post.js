@@ -1,28 +1,28 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-    const Post = sequelize.define('Posts', {
-        postID: {
-          type: DataTypes.INTEGER,
-          primaryKey: true,
-          autoIncrement: true
+    const Post = sequelize.define('Post', {
+        PostID: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
         },
         Title: {
-          type: DataTypes.STRING(255)
+            type: DataTypes.STRING(255)
         },
         Date: {
-          type: DataTypes.DATE
+            type: DataTypes.DATE
         }
-      }, {timestamps: false});
+    }, { timestamps: false });
 
     Post.associate = (models) => {
-        Post.hasOne(models.PostDetails, {
-            foreignKey: 'postID'
+        Post.hasOne(models.PostDetail, {
+            foreignKey: 'PostID'
         });
-        Post.hasMany(models.Rates, {
-            foreignKey: 'postID'
+        Post.hasMany(models.Rate, {
+            foreignKey: 'PostID'
         });
-        Post.belongsTo(models.Users, {
+        Post.belongsTo(models.User, {
             foreignKey: 'OwnerID'
         });
     };

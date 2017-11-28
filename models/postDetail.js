@@ -1,8 +1,8 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-    const PostDetail = sequelize.define('PostDetails', {
-        detailID: {
+    const PostDetail = sequelize.define('PostDetail', {
+        PostDetailID: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
@@ -13,8 +13,8 @@ module.exports = (sequelize, DataTypes) => {
     }, { timestamps: false });
 
     PostDetail.associate = (models) => {
-        PostDetail.hasMany(models.Comments, {
-            foreignKey: 'postDetailID'
+        PostDetail.hasMany(models.Comment, {
+            foreignKey: 'PostDetailID'  // Consider to make Comment -> Post relationship
         });
     };
 

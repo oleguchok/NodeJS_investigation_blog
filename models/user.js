@@ -1,8 +1,8 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-    const User = sequelize.define('Users', {
-        userID: {
+    const User = sequelize.define('User', {
+        UserID: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
@@ -26,14 +26,14 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     User.associate = (models) => {
-        User.hasMany(models.Posts, {
+        User.hasMany(models.Post, {
             foreignKey: 'OwnerID'
         });
-        User.hasMany(models.Comments, {
-            foreignKey: 'commentOwnerID'
+        User.hasMany(models.Comment, {
+            foreignKey: 'CommentOwnerID'
         });
-        User.hasMany(models.Rates, {
-            foreignKey: 'userID'
+        User.hasMany(models.Rate, {
+            foreignKey: 'UserID'
         });
     }
 

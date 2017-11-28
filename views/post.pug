@@ -58,7 +58,7 @@ html(lang="en")
             | #{comment.Date.toDateString()}
             | by 
             strong #{comment.Name}
-      form(action="/profile/post/"+currentPost.id+"/newComment?ownerId="+global.User.id+"&detailId="+currentPost.detailID,method="POST")
+      form(action="/profile/post/"+currentPost.id+"/newComment?ownerId="+global.User.id+"&detailId="+currentPost.PostDetailID,method="POST")
           .form-group
             
                 label(for="comment").

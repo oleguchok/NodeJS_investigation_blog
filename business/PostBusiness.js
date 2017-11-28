@@ -90,7 +90,7 @@ function getPostById(postId) {
                 Name: postInfo[POST_MODEL.POST_AUTHOR],
                 Date: new Date(Date.parse(postInfo[POST_MODEL.POST_CREATION_DATE])),
                 PostBody: postInfo[POST_MODEL.POST_CONTENT],
-                detailID: postInfo[POST_MODEL.POST_DETAIL_ID]
+                PostDetailID: postInfo[POST_MODEL.POST_DETAIL_ID]
             },
             postComments: getPostCommentsByPostId(postId, result)
         };
@@ -126,8 +126,8 @@ function addCommentToThePost(content, ownerId, detailId) {
             .create({
                 CommentContent: content,
                 Date: new Date(),
-                postDetailID: detailId, //refactor to check if post detail and owner are exist
-                commentOwnerID: ownerId
+                PostDetailID: detailId, //refactor to check if post detail and owner are exist
+                CommentOwnerID: ownerId
             }).then((result) => {
                 // CACHE update on comment adding
                 if (config.cache.shouldBeUsed) {
@@ -154,7 +154,7 @@ function getPostInfoById(postId, posts) {
             postInfo[POST_MODEL.POST_AUTHOR] = posts[i].User.Name;
             postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i][columns.BLOG.POSTS.DATE];
             postInfo[POST_MODEL.POST_CONTENT] = posts[i].PostDetail.PostBody;
-            postInfo[POST_MODEL.POST_DETAIL_ID] = posts[i].PostDetail.detailID;
+            postInfo[POST_MODEL.POST_DETAIL_ID] = posts[i].PostDetail.PostDetailID;
             postInfo[POST_MODEL.POST_RATE] = posts[i][POST_MODEL.POST_RATE]; // count average (sum / count)
             break;
         }
@@ -228,9 +228,9 @@ function setRateToThePost(rating, postId, ownerId) {
     return new Promise((resolve, reject) => {
         Rates
             .create({
-                rate: rating,
-                postID: 1,
-                userID: 1
+                Rate: rating,
+                PostID: postId,
+                UserID: ownerId
             })
             .then((result) => {
                 if (config.cache.shouldBeUsed) {
