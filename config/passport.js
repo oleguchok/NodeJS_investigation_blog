@@ -2,7 +2,7 @@ const LocalStrategy = require('passport-local').Strategy,
     FacebookStrategy = require('passport-facebook').Strategy,
     configAuth = require('./auth'),
     DB = require('./constants'),
-    UsersBusiness = require('../business/UserBusiness');
+    UserBusiness = require('../business/UserBusiness');
 
 module.exports = function(passport) {
 
@@ -15,18 +15,18 @@ module.exports = function(passport) {
     });
 
     passport.use('local', new LocalStrategy((username, password, done) => {
-        UsersBusiness.getUserByCredentials(username, password)
-            .then((result) => {
+        UserBusiness.getUserByCredentials(username, password)
+            .then((user) => {
 
                 global.User = {
-                    id: result[`${DB.columns.BLOG.USERS.USER_ID}`],
-                    name: result[`${DB.columns.BLOG.USERS.NAME}`],
-                    password: result[`${DB.columns.BLOG.USERS.PASSWORD}`]
+                    id: user.UserID,
+                    name: user.Name,
+                    password: user.Password
                 };
 
                 return done(null, {
-                    userId: result[`${DB.columns.BLOG.USERS.USER_ID}`],
-                    username: result[`${DB.columns.BLOG.USERS.NAME}`]
+                    userId: user.UserID,
+                    username: user.Name
                 });
 
             }).catch(() => {

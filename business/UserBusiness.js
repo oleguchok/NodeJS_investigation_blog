@@ -1,8 +1,8 @@
-const Users = require('../models/').Users;
+const User = require('../models/').User;
 
 function getUserByCredentials(username, password) {
     return new Promise((resolve, reject) => {
-        Users.findAll({
+        User.findAll({
                 where: {
                     Name: username,
                     Password: password

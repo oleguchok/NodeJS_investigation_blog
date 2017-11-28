@@ -1,21 +1,21 @@
-const Posts = require('../models/').Posts,
-    PostDetails = require('../models/').PostDetails,
-    Comments = require('../models/').Comments,
-    Rates = require('../models/').Rates,
-    Users = require('../models').Users,
+const Post = require('../models/').Post,
+    PostDetail = require('../models/').PostDetail,
+    Comment = require('../models/').Comment,
+    Rate = require('../models/').Rate,
+    User = require('../models').User,
     cache = require('../config/cache.js'),
     { POST_MODEL, CACHE, columns } = require('../config/constants'),
     config = require('../config/config.js')[process.env.NODE_ENV];
 
 function getAllPostsInfo() {
-    return Posts.findAll({
+    return Post.findAll({
         include: [{
-            model: Users,
+            model: User,
             attributes: ['Name']
         }, {
-            model: PostDetails
+            model: PostDetail
         }, {
-            model: Rates
+            model: Rate
         }]
     });
 };
@@ -55,14 +55,14 @@ function getProfileInfo() {
 function addPost(title, content) {
 
     return new Promise((resolve, reject) => {
-        Posts.create({
+        Post.create({
             Title: title,
             Date: new Date(),
             PostDetail: {
                 PostBody: content
             }
         }, {
-            include: [PostDetails]
+            include: [PostDetail]
         }).then((result) => {
             if (config.cache.shouldBeUsed) {
                 getAllPostsInfo()
@@ -122,7 +122,7 @@ function getPostById(postId) {
 
 function addCommentToThePost(content, ownerId, detailId) {
     return new Promise((resolve, reject) => {
-        Comments
+        Comment
             .create({
                 CommentContent: content,
                 Date: new Date(),
@@ -226,7 +226,7 @@ function getOtherUsersPosts(posts) {
 function setRateToThePost(rating, postId, ownerId) {
 
     return new Promise((resolve, reject) => {
-        Rates
+        Rate
             .create({
                 Rate: rating,
                 PostID: postId,
