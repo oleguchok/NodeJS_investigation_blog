@@ -22,36 +22,70 @@ function getAllPostsInfo() {
                 include: [{
                     model: User,
                     attributes: ['Name']
-                }],
-            }],
-            raw: true
+                }]
+            }]
         }, {
             model: Rate,
-            attributes: [[Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']]            
-        }],
-        group: ['Post.PostID', 'Title', 'Post.Date', 'OwnerID', 'User.UserID', 'User.Name', 'PostDetail.PostDetailID', 'PostBody', 'CommentContent', 'PostDetail->Comments.Date', 'PostDetail->Comments.CommentOwnerID', 'PostDetail->Comments->User.UserID', 'PostDetail->Comments->User.Name'],
-        raw: true
+            attributes: ['Rate', 'UserID']
+        }]
     }).then((posts) => {
         return posts.map((post) => {
-            post.User = {
-                Name: post['User.Name']
-            };
+            let averageRate;
+            if (post.Rates.length > 0) {
+                var rates = post.Rates.map((rate) => {
+                    return rate.Rate;
+                });
 
-            post.PostDetail = {
-                PostDetailID: post['PostDetail.PostDetailID'],
-                PostBody: post['PostDetail.PostBody']
+                averageRate = rates.reduce((accumulator, currentRate) => accumulator + currentRate) / rates.length;
             }
 
-            post.RateAvg = post['Rates.RateAvg'];
-
-            delete post['User.Name'];
-            delete post['PostDetail.PostDetailID'];
-            delete post['PostDetail.PostBody'];
-            delete post['Rates.RateAvg'];
-
+            post.dataValues.AverageRate = averageRate;
             return post;
         });
     });
+    // return Post.findAll({
+    //     include: [{
+    //         model: User,
+    //         attributes: ['Name']
+    //     }, {
+    //         model: PostDetail,
+    //         attributes: ['PostDetailID', 'PostBody'],
+    //         include: [{
+    //             model: Comment,
+    //             attributes: ['CommentContent', 'Date', 'CommentOwnerID'],
+    //             include: [{
+    //                 model: User,
+    //                 attributes: ['Name']
+    //             }],
+    //         }],
+    //         raw: true
+    //     }, {
+    //         model: Rate,
+    //         attributes: [[Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']]            
+    //     }],
+    //     group: ['Post.PostID', 'Title', 'Post.Date', 'OwnerID', 'User.UserID', 'User.Name', 'PostDetail.PostDetailID', 'PostBody', 'CommentContent', 'PostDetail->Comments.Date', 'PostDetail->Comments.CommentOwnerID', 'PostDetail->Comments->User.UserID', 'PostDetail->Comments->User.Name'],
+    //     raw: true
+    // }).then((posts) => {
+    //     return posts.map((post) => {
+    //         post.User = {
+    //             Name: post['User.Name']
+    //         };
+
+    //         post.PostDetail = {
+    //             PostDetailID: post['PostDetail.PostDetailID'],
+    //             PostBody: post['PostDetail.PostBody']
+    //         }
+
+    //         post.RateAvg = post['Rates.RateAvg'];
+
+    //         delete post['User.Name'];
+    //         delete post['PostDetail.PostDetailID'];
+    //         delete post['PostDetail.PostBody'];
+    //         delete post['Rates.RateAvg'];
+
+    //         return post;
+    //     });
+    // });
 };
 
 function getProfileInfo() {
@@ -165,7 +199,7 @@ function _getPostInfoById(postId, posts) {
             postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i].Date;
             postInfo[POST_MODEL.POST_CONTENT] = posts[i].PostDetail.PostBody;
             postInfo[POST_MODEL.POST_DETAIL_ID] = posts[i].PostDetail.PostDetailID;
-            postInfo[POST_MODEL.POST_RATE] = posts[i].RateAvg;
+            postInfo[POST_MODEL.POST_RATE] = posts[i].AverageRate;
             break;
         }
     }
@@ -173,26 +207,45 @@ function _getPostInfoById(postId, posts) {
 };
 
 function _getPostCommentsByPostId(postId, posts) {
-    let currentPostInfo = posts.filter((item) => {
-        return (item[POST_MODEL.POST_ID] === +postId && !!item[POST_MODEL.POST_COMMENT_AUTHOR_ID]);
-    });
+    var postWithComments = posts.find((element) => element.PostID === +postId && element.PostDetail !== null && element.PostDetail.Comments !== null && element.PostDetail.Comments.length > 0);
 
-    return currentPostInfo.map((item) => {
-        return {
-            commentContent: item[POST_MODEL.POST_COMMENT_CONTENT],
-            Date: new Date(Date.parse(item[POST_MODEL.POST_COMMENT_CREATION_DATE])),
-            Name: item[POST_MODEL.POST_COMMENT_AUTHOR]
-        }
-    }).sort((a, b) => {
-        return (a.Date.getTime() - b.Date.getTime())
-    });
+    if (!!postWithComments) {
+        return postWithComments.PostDetail.Comments.map((comment) => {
+            return {
+                commentContent: comment.CommentContent,
+                Date: new Date(Date.parse(comment.Date)),
+                Name: comment.CommentOwnerID
+            }
+        }).sort((a, b) => {
+            return (a.Date.getTime() - b.Date.getTime())
+        });
+    }
+
+    return null;
+
+    // let currentPostInfo = posts.filter((item) => {
+    //     return (item[POST_MODEL.POST_ID] === +postId && !!item.PostDetail.Comments && item.PostDetail.Comments.length > 0);
+    // });
+
+    // return currentPostInfo.map((item) => {
+    //     return {
+    //         commentContent: item.PostDetail.Com,
+    //         Date: new Date(Date.parse(item[POST_MODEL.POST_COMMENT_CREATION_DATE])),
+    //         Name: item[POST_MODEL.POST_COMMENT_AUTHOR]
+    //     }
+    // }).sort((a, b) => {
+    //     return (a.Date.getTime() - b.Date.getTime())
+    // });
 };
 
 function _isPostRatedByCurrentUser(postId, posts) {
     let isRated = null;
     posts.forEach((post) => {
-        if (post.PostID === +postId) {
-            isRated = !!post[POST_MODEL.CURRENT_USERS_RATE]; // Thkink about it
+        if (post.PostID === +postId && post.Rates.length > 0) {
+            var userRates = post.Rates.filter((rate) => {
+                return rate.UserID == global.User.id;
+            });
+            isRated = userRates.length > 0;
         }
     });
     return isRated;
