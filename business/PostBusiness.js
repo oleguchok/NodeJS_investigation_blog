@@ -1,103 +1,39 @@
-const Post = require('../models/').Post,
-    PostDetail = require('../models/').PostDetail,
-    Comment = require('../models/').Comment,
-    Rate = require('../models/').Rate,
-    User = require('../models').User,
-    Sequelize = require('../models/').Sequelize,
+const PostRepository = require('../lib/PostRepository'),
+    CommentRepository = require('../lib/CommentRepository'),
+    RateRepository = require('../lib/RateRepository'),
     cache = require('../config/cache.js'),
     { POST_MODEL, CACHE, columns } = require('../config/constants'),
-    config = require('../config/config.js')[process.env.NODE_ENV];
+    shouldCacheBeUsed = require('../config/config.js')[process.env.NODE_ENV].cache.shouldBeUsed;
 
 function getAllPostsInfo() {
-    return Post.findAll({
-        include: [{
-            model: User,
-            attributes: ['Name']
-        }, {
-            model: PostDetail,
-            attributes: ['PostDetailID', 'PostBody'],
-            include: [{
-                model: Comment,
-                attributes: ['CommentContent', 'Date', 'CommentOwnerID'],
-                include: [{
-                    model: User,
-                    attributes: ['Name']
-                }]
-            }]
-        }, {
-            model: Rate,
-            attributes: ['Rate', 'UserID']
-        }]
-    }).then((posts) => {
-        return posts.map((post) => {
-            let averageRate;
-            if (post.Rates.length > 0) {
-                var rates = post.Rates.map((rate) => {
-                    return rate.Rate;
-                });
+    return PostRepository.getAllPostsWithInfo()
+        .then((posts) => {
+            return posts.map((post) => {
+                let averageRate;
+                if (post.Rates.length > 0) {
+                    var rates = post.Rates.map((rate) => {
+                        return rate.Rate;
+                    });
 
-                averageRate = rates.reduce((accumulator, currentRate) => accumulator + currentRate) / rates.length;
-            }
+                    averageRate = rates.reduce((accumulator, currentRate) => accumulator + currentRate) / rates.length;
+                }
 
-            post.dataValues.AverageRate = averageRate;
-            return post;
+                post.dataValues.AverageRate = averageRate;
+                return post;
+            });
         });
-    });
-    // return Post.findAll({
-    //     include: [{
-    //         model: User,
-    //         attributes: ['Name']
-    //     }, {
-    //         model: PostDetail,
-    //         attributes: ['PostDetailID', 'PostBody'],
-    //         include: [{
-    //             model: Comment,
-    //             attributes: ['CommentContent', 'Date', 'CommentOwnerID'],
-    //             include: [{
-    //                 model: User,
-    //                 attributes: ['Name']
-    //             }],
-    //         }],
-    //         raw: true
-    //     }, {
-    //         model: Rate,
-    //         attributes: [[Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']]            
-    //     }],
-    //     group: ['Post.PostID', 'Title', 'Post.Date', 'OwnerID', 'User.UserID', 'User.Name', 'PostDetail.PostDetailID', 'PostBody', 'CommentContent', 'PostDetail->Comments.Date', 'PostDetail->Comments.CommentOwnerID', 'PostDetail->Comments->User.UserID', 'PostDetail->Comments->User.Name'],
-    //     raw: true
-    // }).then((posts) => {
-    //     return posts.map((post) => {
-    //         post.User = {
-    //             Name: post['User.Name']
-    //         };
-
-    //         post.PostDetail = {
-    //             PostDetailID: post['PostDetail.PostDetailID'],
-    //             PostBody: post['PostDetail.PostBody']
-    //         }
-
-    //         post.RateAvg = post['Rates.RateAvg'];
-
-    //         delete post['User.Name'];
-    //         delete post['PostDetail.PostDetailID'];
-    //         delete post['PostDetail.PostBody'];
-    //         delete post['Rates.RateAvg'];
-
-    //         return post;
-    //     });
-    // });
 };
 
 function getProfileInfo() {
     return new Promise((resolve, reject) => {
-        if (config.cache.shouldBeUsed) { // remove if by using DI
+        if (shouldCacheBeUsed) { // remove if by using DI
             cache
                 .getData()
                 .then((result) => {
                     if (!result) {
                         getAllPostsInfo()
                             .then((result) => {
-                                cacheUpdate(result);
+                                _cacheUpdate(result);
                                 resolve(_createResponseOptions(result));
                             });
                     } else {
@@ -115,40 +51,32 @@ function getProfileInfo() {
 
 function addPost(title, content) {
     return new Promise((resolve, reject) => {
-        Post.create({
-            Title: title,
-            Date: new Date(),
-            OwnerID: global.User.id,
-            PostDetail: {
-                PostBody: content
-            }
-        }, {
-            include: [PostDetail]
-        }).then((result) => {
-            if (config.cache.shouldBeUsed) {
-                return getAllPostsInfo()
-                    .then((result) => {
-                        cacheUpdate(result, resolve);
-                    });
-            } else {
-                resolve();
-            }
-        }).catch((error) => {
-            console.log(error);
-        });
+        PostRepository.createPost(title, content, global.User.id)
+            .then((result) => {
+                if (shouldCacheBeUsed) {
+                    return getAllPostsInfo()
+                        .then((result) => {
+                            _cacheUpdate(result, resolve);
+                        });
+                } else {
+                    resolve();
+                }
+            }).catch((error) => {
+                console.log(error);
+            });
     });
 };
 
 function getPostById(postId) {
     return new Promise((resolve, reject) => {
-        if (config.cache.shouldBeUsed) {
+        if (shouldCacheBeUsed) {
             cache
                 .getData()
                 .then((result) => {
                     if (!result) {
                         getAllPostsInfo()
                             .then((result) => {
-                                cacheUpdate(result);
+                                _cacheUpdate(result);
                                 resolve(_createResponseOptionsForThePost(postId, result));
                             })
                     } else {
@@ -166,18 +94,29 @@ function getPostById(postId) {
 
 function addCommentToThePost(content, ownerId, detailId) {
     return new Promise((resolve, reject) => {
-        Comment
-            .create({
-                CommentContent: content,
-                Date: new Date(),
-                PostDetailID: detailId, //refactor to check if post detail and owner are exist
-                CommentOwnerID: ownerId
-            }).then((result) => {
+        CommentRepository.createComment(content, ownerId, detailId)
+            .then((result) => {
                 // CACHE update on comment adding
-                if (config.cache.shouldBeUsed) {
+                if (shouldCacheBeUsed) {
                     getAllPostsInfo()
                         .then((result) => {
-                            cacheUpdate(result, resolve);
+                            _cacheUpdate(result, resolve);
+                        });
+                } else {
+                    resolve();
+                }
+            });
+    });
+}
+
+function setRateToThePost(rating, postId, ownerId) {
+    return new Promise((resolve, reject) => {
+        RateRepository.createRate(rating, postId, ownerId)
+            .then((result) => {
+                if (shouldCacheBeUsed) {
+                    getAllPostsInfo()
+                        .then((result) => {
+                            _cacheUpdate(result, resolve);
                         });
                 } else {
                     resolve();
@@ -221,7 +160,7 @@ function _getPostCommentsByPostId(postId, posts) {
         });
     }
 
-    return null;
+    return [];
 
     // let currentPostInfo = posts.filter((item) => {
     //     return (item[POST_MODEL.POST_ID] === +postId && !!item.PostDetail.Comments && item.PostDetail.Comments.length > 0);
@@ -296,29 +235,7 @@ function _createResponseOptionsForThePost(postId, result) {
     };
 };
 
-function setRateToThePost(rating, postId, ownerId) {
-
-    return new Promise((resolve, reject) => {
-        Rate
-            .create({
-                Rate: rating,
-                PostID: postId,
-                UserID: ownerId
-            })
-            .then((result) => {
-                if (config.cache.shouldBeUsed) {
-                    getAllPostsInfo()
-                        .then((result) => {
-                            cacheUpdate(result, resolve);
-                        });
-                } else {
-                    resolve();
-                }
-            });
-    });
-}
-
-function cacheUpdate(result, callback) {
+function _cacheUpdate(result, callback) {
     cache
         .event
         .emit(CACHE.EVENTS.UPDATE_DATA, result, () => {
