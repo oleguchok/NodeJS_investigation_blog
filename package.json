@@ -21,7 +21,7 @@
     "passport-local": "^1.0.0",
     "pug": "^2.0.0-beta11",
     "redis": "^2.7.1",
-    "sequelize": "^3.30.4",
+    "sequelize": "^4.23.2",
     "tedious": "^2.0.0"
   },
   "devDependencies": {

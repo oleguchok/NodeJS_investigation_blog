@@ -15,19 +15,46 @@ function getAllPostsInfo() {
             attributes: ['Name']
         }, {
             model: PostDetail,
-            attributes: ['PostBody']
+            attributes: ['PostDetailID', 'PostBody'],
+            include: [{
+                model: Comment,
+                attributes: ['CommentContent', 'Date', 'CommentOwnerID'],
+                include: [{
+                    model: User,
+                    attributes: ['Name']
+                }],
+            }],
+            raw: true
         }, {
             model: Rate,
-            attributes: [
-                [Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']
-            ]
+            attributes: [[Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']]            
         }],
-        group: ['Post.PostID', 'Title', 'Date', 'OwnerID', 'User.UserID', 'Name', 'PostDetailID', 'PostBody', 'RateID']
+        group: ['Post.PostID', 'Title', 'Post.Date', 'OwnerID', 'User.UserID', 'User.Name', 'PostDetail.PostDetailID', 'PostBody', 'CommentContent', 'PostDetail->Comments.Date', 'PostDetail->Comments.CommentOwnerID', 'PostDetail->Comments->User.UserID', 'PostDetail->Comments->User.Name'],
+        raw: true
+    }).then((posts) => {
+        return posts.map((post) => {
+            post.User = {
+                Name: post['User.Name']
+            };
+
+            post.PostDetail = {
+                PostDetailID: post['PostDetail.PostDetailID'],
+                PostBody: post['PostDetail.PostBody']
+            }
+
+            post.RateAvg = post['Rates.RateAvg'];
+
+            delete post['User.Name'];
+            delete post['PostDetail.PostDetailID'];
+            delete post['PostDetail.PostBody'];
+            delete post['Rates.RateAvg'];
+
+            return post;
+        });
     });
 };
 
 function getProfileInfo() {
-
     return new Promise((resolve, reject) => {
         if (config.cache.shouldBeUsed) { // remove if by using DI
             cache
@@ -53,7 +80,6 @@ function getProfileInfo() {
 };
 
 function addPost(title, content) {
-
     return new Promise((resolve, reject) => {
         Post.create({
             Title: title,
@@ -80,23 +106,6 @@ function addPost(title, content) {
 };
 
 function getPostById(postId) {
-    function createResponseOptionsForThePost(postId, result) {
-        let postInfo = getPostInfoById(postId, result);
-        return {
-            currentPost: {
-                id: postId,
-                currentUsersRate: isPostRatedByCurrentUser(postId, result),
-                averageRate: postInfo[POST_MODEL.POST_RATE],
-                Title: postInfo[POST_MODEL.POST_TITLE],
-                Name: postInfo[POST_MODEL.POST_AUTHOR],
-                Date: new Date(Date.parse(postInfo[POST_MODEL.POST_CREATION_DATE])),
-                PostBody: postInfo[POST_MODEL.POST_CONTENT],
-                PostDetailID: postInfo[POST_MODEL.POST_DETAIL_ID]
-            },
-            postComments: getPostCommentsByPostId(postId, result)
-        };
-    };
-
     return new Promise((resolve, reject) => {
         if (config.cache.shouldBeUsed) {
             cache
@@ -106,16 +115,16 @@ function getPostById(postId) {
                         getAllPostsInfo()
                             .then((result) => {
                                 cacheUpdate(result);
-                                resolve(createResponseOptionsForThePost(postId, result));
+                                resolve(_createResponseOptionsForThePost(postId, result));
                             })
                     } else {
-                        resolve(createResponseOptionsForThePost(postId, JSON.parse(result)));
+                        resolve(_createResponseOptionsForThePost(postId, JSON.parse(result)));
                     }
                 })
         } else {
             getAllPostsInfo()
                 .then((result) => {
-                    resolve(createResponseOptionsForThePost(postId, result));
+                    resolve(_createResponseOptionsForThePost(postId, result));
                 })
         }
     });
@@ -143,27 +152,27 @@ function addCommentToThePost(content, ownerId, detailId) {
     });
 }
 
-function getPostInfoById(postId, posts) {
+function _getPostInfoById(postId, posts) {
     let postInfo = {};
     postInfo[POST_MODEL.POST_TITLE] = null;
     postInfo[POST_MODEL.POST_AUTHOR] = null;
     postInfo[POST_MODEL.POST_CREATION_DATE] = null;
 
     for (let i = 0; i < posts.length; i++) {
-        if (posts[i][columns.BLOG.POSTS.POST_ID] === +postId) {
-            postInfo[POST_MODEL.POST_TITLE] = posts[i][columns.BLOG.POSTS.TITLE];
+        if (posts[i].PostID === +postId) {
+            postInfo[POST_MODEL.POST_TITLE] = posts[i].Title;
             postInfo[POST_MODEL.POST_AUTHOR] = posts[i].User.Name;
-            postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i][columns.BLOG.POSTS.DATE];
+            postInfo[POST_MODEL.POST_CREATION_DATE] = posts[i].Date;
             postInfo[POST_MODEL.POST_CONTENT] = posts[i].PostDetail.PostBody;
             postInfo[POST_MODEL.POST_DETAIL_ID] = posts[i].PostDetail.PostDetailID;
-            postInfo[POST_MODEL.POST_RATE] = posts[i][POST_MODEL.POST_RATE]; // count average (sum / count)
+            postInfo[POST_MODEL.POST_RATE] = posts[i].RateAvg;
             break;
         }
     }
     return postInfo;
 };
 
-function getPostCommentsByPostId(postId, posts) {
+function _getPostCommentsByPostId(postId, posts) {
     let currentPostInfo = posts.filter((item) => {
         return (item[POST_MODEL.POST_ID] === +postId && !!item[POST_MODEL.POST_COMMENT_AUTHOR_ID]);
     });
@@ -179,11 +188,11 @@ function getPostCommentsByPostId(postId, posts) {
     });
 };
 
-function isPostRatedByCurrentUser(postId, posts) {
+function _isPostRatedByCurrentUser(postId, posts) {
     let isRated = null;
-    posts.forEach((item) => {
-        if (item[POST_MODEL.POST_ID] === +postId) {
-            isRated = !!item[POST_MODEL.CURRENT_USERS_RATE];
+    posts.forEach((post) => {
+        if (post.PostID === +postId) {
+            isRated = !!post[POST_MODEL.CURRENT_USERS_RATE]; // Thkink about it
         }
     });
     return isRated;
@@ -215,6 +224,23 @@ function _getOtherUsersPosts(posts) {
             Name: post.User.Name
         }
     });
+};
+
+function _createResponseOptionsForThePost(postId, result) {
+    let postInfo = _getPostInfoById(postId, result);
+    return {
+        currentPost: {
+            id: postId,
+            currentUsersRate: _isPostRatedByCurrentUser(postId, result),
+            averageRate: postInfo[POST_MODEL.POST_RATE],
+            Title: postInfo[POST_MODEL.POST_TITLE],
+            Name: postInfo[POST_MODEL.POST_AUTHOR],
+            Date: new Date(Date.parse(postInfo[POST_MODEL.POST_CREATION_DATE])),
+            PostBody: postInfo[POST_MODEL.POST_CONTENT],
+            PostDetailID: postInfo[POST_MODEL.POST_DETAIL_ID]
+        },
+        postComments: _getPostCommentsByPostId(postId, result)
+    };
 };
 
 function setRateToThePost(rating, postId, ownerId) {
