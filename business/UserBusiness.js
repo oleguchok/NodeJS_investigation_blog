@@ -1,13 +1,8 @@
-const User = require('../models/').User;
+const UserRepository = require('../lib/UserRepository');
 
 function getUserByCredentials(username, password) {
     return new Promise((resolve, reject) => {
-        User.findAll({
-                where: {
-                    Name: username,
-                    Password: password
-                }
-            })
+        UserRepository.getUsersByUsernameAndPassword(username, password)
             .then((users) => {
                 if (!users.length || users.length > 1) {
                     reject(users);
