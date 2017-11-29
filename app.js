@@ -1,6 +1,7 @@
 const express = require('express'),
     path = require('path'),
-    passport = require('passport');
+    passport = require('passport'),
+    db = require('./models/');
 
 require('./config/passport')(passport);
 
@@ -12,6 +13,9 @@ const routes = require('./routes/routes')(passport),
     session = require('express-session');
 
 const app = express();
+
+// Sync database
+db.initialize();
 
 // App configuration
 app.set('port', (process.env.PORT || 3000));
@@ -25,9 +29,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(session({secret: 'keyboard cat', resave: true, saveUninitialized: true, cookie: {}}));
+app.use(session({ secret: 'keyboard cat', resave: true, saveUninitialized: true, cookie: {} }));
 app.use(passport.initialize());
 app.use(passport.session());
 
