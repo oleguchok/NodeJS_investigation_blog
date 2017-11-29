@@ -18,7 +18,9 @@ function getAllPostsInfo() {
             attributes: ['PostBody']
         }, {
             model: Rate,
-            attributes: [[Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']]
+            attributes: [
+                [Sequelize.fn('AVG', Sequelize.col('Rate')), 'RateAvg']
+            ]
         }],
         group: ['Post.PostID', 'Title', 'Date', 'OwnerID', 'User.UserID', 'Name', 'PostDetailID', 'PostBody', 'RateID']
     });
@@ -27,7 +29,7 @@ function getAllPostsInfo() {
 function getProfileInfo() {
 
     return new Promise((resolve, reject) => {
-        if (config.cache.shouldBeUsed) {  // remove if by using DI
+        if (config.cache.shouldBeUsed) { // remove if by using DI
             cache
                 .getData()
                 .then((result) => {
@@ -64,7 +66,7 @@ function addPost(title, content) {
             include: [PostDetail]
         }).then((result) => {
             if (config.cache.shouldBeUsed) {
-                getAllPostsInfo()
+                return getAllPostsInfo()
                     .then((result) => {
                         cacheUpdate(result, resolve);
                     });
