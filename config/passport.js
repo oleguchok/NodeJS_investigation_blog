@@ -29,10 +29,19 @@ module.exports = function(passport) {
                     username: user.Name
                 });
 
-            }).catch(() => {
-                return done(null, false); //Check done 1 argument
+            }).catch((err) => {
+                return done(err);
             });
     }));
+
+    passport.authenticationMiddleware = () => {
+        return function(req, res, next) {
+            if (req.isAuthenticated()) {
+                return next();
+            }
+            res.redirect('/');
+        }
+    };
 
     passport.use(new FacebookStrategy({
         clientID: configAuth.facebookAuth.clientID,

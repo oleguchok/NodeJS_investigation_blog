@@ -20,7 +20,7 @@ module.exports = function (passport) {
         res.render('login');
     });
 
-    router.get('/profile', (req, res) => {
+    router.get('/profile', passport.authenticationMiddleware(), (req, res) => {
         console.time("Profile_Benchmark");
         PostBusiness
             .getProfileInfo()
