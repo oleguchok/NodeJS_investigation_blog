@@ -10,7 +10,8 @@ const routes = require('./routes/routes')(passport),
     bodyParser = require('body-parser'),
     cookieParser = require('cookie-parser'),
     morgan = require('morgan'),
-    session = require('express-session');
+    session = require('express-session'),
+    flash = require('connect-flash');
 
 const app = express();
 
@@ -28,6 +29,7 @@ if (process.env.NODE_ENV === "development") {
     app.use(morgan('dev'));
 }
 
+app.use(flash());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -37,8 +39,12 @@ app.use(passport.session());
 
 app.use('/', routes);
 
-// app.use((err, req, res, next) => {     res.status(err.status || 500);
-// res.render('error', {         message: err.message,         error: err
-// });     next(); });
+app.use((err, req, res, next) => {
+    res.status(err.status || 500);
+    res.render('errorPage', {
+        message: err.message,
+        error: err
+    });
+});
 
 module.exports = app;

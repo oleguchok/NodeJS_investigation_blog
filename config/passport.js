@@ -2,7 +2,8 @@ const LocalStrategy = require('passport-local').Strategy,
     FacebookStrategy = require('passport-facebook').Strategy,
     configAuth = require('./auth'),
     DB = require('./constants'),
-    UserBusiness = require('../business/UserBusiness');
+    UserBusiness = require('../business/UserBusiness'),
+    _ = require('underscore');
 
 module.exports = function(passport) {
 
@@ -17,6 +18,9 @@ module.exports = function(passport) {
     passport.use('local', new LocalStrategy((username, password, done) => {
         UserBusiness.getUserByCredentials(username, password)
             .then((user) => {
+                if (!user) {
+                    return done(null, false, { message: 'Incorrect username or password' });
+                }
 
                 global.User = {
                     id: user.UserID,
@@ -34,9 +38,9 @@ module.exports = function(passport) {
             });
     }));
 
-    passport.authenticationMiddleware = () => {
+    passport.authenticationMiddleware = (paths) => {        
         return function(req, res, next) {
-            if (req.isAuthenticated()) {
+            if (req.isAuthenticated() || _.contains(paths, req.path)) {                
                 return next();
             }
             res.redirect('/');

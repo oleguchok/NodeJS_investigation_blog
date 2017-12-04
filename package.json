@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.17.1",
+    "connect-flash": "^0.1.1",    
     "cookie-parser": "^1.4.3",
     "express": "^4.15.2",
     "express-session": "^1.15.2",
@@ -22,7 +23,8 @@
     "pug": "^2.0.0-beta11",
     "redis": "^2.7.1",
     "sequelize": "^4.23.2",
-    "tedious": "^2.0.0"
+    "tedious": "^2.0.0",
+    "underscore": "^1.8.3"    
   },
   "devDependencies": {
     "chai": "^3.5.0",
