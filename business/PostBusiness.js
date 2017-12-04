@@ -31,7 +31,7 @@ function getProfileInfo() {
                 .getData()
                 .then((result) => {
                     if (!result) {
-                        getAllPostsInfo()
+                        return getAllPostsInfo()
                             .then((result) => {
                                 _cacheUpdate(result);
                                 resolve(_createResponseOptions(result));
@@ -39,11 +39,15 @@ function getProfileInfo() {
                     } else {
                         resolve(_createResponseOptions(JSON.parse(result)));
                     }
+                }).catch((err) => {
+                    reject(err);
                 })
         } else {
             getAllPostsInfo()
                 .then((result) => {
                     resolve(_createResponseOptions(result));
+                }).catch((err) => {
+                    reject(err);
                 });
         }
     });
@@ -63,6 +67,7 @@ function addPost(title, content) {
                 }
             }).catch((error) => {
                 console.log(error);
+                reject(error);
             });
     });
 };
@@ -74,7 +79,7 @@ function getPostById(postId) {
                 .getData()
                 .then((result) => {
                     if (!result) {
-                        getAllPostsInfo()
+                        return getAllPostsInfo()
                             .then((result) => {
                                 _cacheUpdate(result);
                                 resolve(_createResponseOptionsForThePost(postId, result));
@@ -82,12 +87,16 @@ function getPostById(postId) {
                     } else {
                         resolve(_createResponseOptionsForThePost(postId, JSON.parse(result)));
                     }
-                })
+                }).catch((err) => {
+                    reject(err);
+                });
         } else {
             getAllPostsInfo()
                 .then((result) => {
                     resolve(_createResponseOptionsForThePost(postId, result));
-                })
+                }).catch((err) => {
+                    reject(err);
+                });
         }
     });
 };
@@ -98,13 +107,15 @@ function addCommentToThePost(content, ownerId, detailId) {
             .then((result) => {
                 // CACHE update on comment adding
                 if (shouldCacheBeUsed) {
-                    getAllPostsInfo()
+                    return getAllPostsInfo()
                         .then((result) => {
                             _cacheUpdate(result, resolve);
                         });
                 } else {
                     resolve();
                 }
+            }).catch((err) => {
+                reject(err);
             });
     });
 }
@@ -114,13 +125,15 @@ function setRateToThePost(rating, postId, ownerId) {
         RateRepository.createRate(rating, postId, ownerId)
             .then((result) => {
                 if (shouldCacheBeUsed) {
-                    getAllPostsInfo()
+                    return getAllPostsInfo()
                         .then((result) => {
                             _cacheUpdate(result, resolve);
                         });
                 } else {
                     resolve();
                 }
+            }).catch((err) => {
+                reject(err);
             });
     });
 }

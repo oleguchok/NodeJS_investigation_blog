@@ -11,6 +11,10 @@ html(lang="en")
     .container
       .row
         .col-sm-6.col-sm-offset-3
+          p
+          .list-group
+            each message in messages
+              li= message
           h1
             span.fa.fa-sign-in
             form(action="/login",method="POST")

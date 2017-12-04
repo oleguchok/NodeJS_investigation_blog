@@ -5,10 +5,14 @@ function getUserByCredentials(username, password) {
         UserRepository.getUsersByUsernameAndPassword(username, password)
             .then((users) => {
                 if (!users.length || users.length > 1) {
-                    reject(users);
+                    resolve();
                 } else {
                     resolve(users[0].get());
                 }
+            })
+            .catch((err) => {
+                console.log(err);
+                reject(err);
             });
     });
 };
